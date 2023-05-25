@@ -1,38 +1,7 @@
 <?php 
-    $_POST = json_decode(file_get_contents('php://input'), true);
     session_start();
     require_once 'connect.php';
-
-    $result = mysqli_query($connect, "SELECT id FROM users WHERE login = '{$_SESSION["login"]}'");
-    if ($result && $result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        $user_id = $row['id'];
-        $_SESSION['userid'] = $user_id;
-        $result = mysqli_query($connect, "SELECT id FROM accounts WHERE user_id = '$user_id'");
-    if ($result && $result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        $account_id = $row['id'];
-        $_SESSION['account_id'] = $account_id; 
-    } else {
-        mysqli_query($connect, "INSERT INTO accounts (user_id, name, balance) VALUES ('$user_id', '{$_SESSION['login']}', 0)");
-        $account_id = mysqli_insert_id($connect);
-    }
-        $_SESSION['account_id'] = $account_id;
-    } else {
-        echo "Пользователь не найден!";
-    }
-
-    $result = mysqli_query($connect, "SELECT balance FROM accounts WHERE user_id = {$_SESSION['userid']} AND id = {$_SESSION['account_id']}");
-    if ($result && $result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        $balance = $row['balance'];
-        $_SESSION['balance'] = $balance;
-    } else {
-        echo "Не удалось получить баланс.";
-    }
-
-    $account_id = mysqli_insert_id($connect);
-    $category2 = mysqli_query($connect, "SELECT id, name, total_expenses FROM categories WHERE user_id = {$_SESSION['userid']}");
+    $categories = mysqli_query($connect, "SELECT id, name FROM categories WHERE user_id = {$_SESSION['userid']}");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -105,15 +74,10 @@
 </style>
 <body>
 </div>
-        <?php
-            // echo "Добро пожаловать " . $_SESSION['login'] . "!" . "<br>";
-            // echo "Ваш балланс " . $balance . "$" . "<br>";
-            // $category2 = mysqli_query($connect, "SELECT id, name, total_expenses FROM categories WHERE user_id = {$_SESSION['userid']}");
-        ?>
     <a class="btn btn-danger" href="index.php">Вернутся на главную страницу</a>
-    <form action="update.php" method="POST" id="mySecondForm">
-        <button type="button" class="btn1 btn btn-success hide" id="new"  >Задать новый счет</button> 
-        <button type="button" class="btn btn btn-success" id="addNewExpenses">Добавить новый вид трат</button> 
+    <form action="category_add.php" method="POST" id="mySecondForm">
+        <input type="text" name="newCategory">
+        <button type="submit" class="btn btn-success" id="addNewExpenses">Добавить новый вид трат</button> 
         <br>
     </form>
     <div class="table_wrapper table-responsive">
@@ -125,12 +89,12 @@
                     </th>
                 </tr>
                 <?php
-                    while ($row = mysqli_fetch_assoc($category2)) {
+                    while ($row = mysqli_fetch_assoc($categories)) {
                         $i++;
                         echo '<tr>';
                         echo '<td>' . $row['name'] . '</td>';
                         // echo '<td>' . $row['total_expenses'] . "$" . '</td>';
-                        echo '<td><a href="update.php?deleteId='.$row['id'].'">Удалить</a></td>';
+                        echo '<td><a href="category_edit.php?deleteId='.$row['id'].'">Удалить</a></td>';
                         echo '<td><a href="category_edit.php?updateid='.$row['id'].'">Изменить</a></td>';
                         echo '</tr>';
                     }
